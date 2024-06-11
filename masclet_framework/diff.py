@@ -266,7 +266,7 @@ def curl(field_x, field_y, field_z, dx, stencil, npatch, kept_patches=None):
 def curl_magnitude(field_x, field_y, field_z, dx, stencil, npatch, kept_patches=None):
     '''
     Computes the magnitude of the curl of a vector field defined on the 
-     AMR hierarchy of grids.
+    AMR hierarchy of grids.
 
     Args:
         field_x: a list of numpy arrays, each one containing the x-component of
@@ -305,7 +305,7 @@ def curl_magnitude(field_x, field_y, field_z, dx, stencil, npatch, kept_patches=
 def gradient_magnitude(field, dx, stencil, npatch, kept_patches=None):
     '''
     Computes the magnitude of the gradient of a scalar field defined on 
-     the AMR hierarchy of grids.
+    the AMR hierarchy of grids.
 
     Args:
         field: a list of numpy arrays, each one containing the scalar field
@@ -321,7 +321,7 @@ def gradient_magnitude(field, dx, stencil, npatch, kept_patches=None):
                 the gradient of the scalar field defined on the corresponding
                 grid of the AMR hierarchy
 
-     Author: David Vallés
+    Author: David Vallés
     '''  
     levels=tools.create_vector_levels(npatch)
     resolution=dx/2**levels
