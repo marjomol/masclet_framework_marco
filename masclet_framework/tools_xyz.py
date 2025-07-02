@@ -24,6 +24,8 @@ from masclet_framework import cosmo_tools, tools
 
 from scipy import optimize
 
+import amr2uniform as a2u
+
 
 # FUNCTIONS DEFINED IN THIS MODULE
 
@@ -672,5 +674,41 @@ def vol_integral(field, units, zeta, cr0amr, solapst, npatch, patchrx, patchry, 
     return integral
 
 
-
-
+def uniform_field(field, clus_cr0amr, clus_solapst, grid_npatch,
+                grid_patchnx, grid_patchny, grid_patchnz, 
+                grid_patchrx, grid_patchry, grid_patchrz,
+                nmax, size, Box,
+                up_to_level=4, ncores=1, verbose=False):
+    '''
+    Cleans and computes the uniform version of the given field for the given AMR grid for its further projection.
+    
+    Args:
+        - field: field to be cleaned and set uniform
+        - clus_cr0amr: AMR grid data
+        - clus_solapst: overlap data
+        - grid_npatch: number of patches in the grid
+        - grid_patchnx, grid_patchny, grid_patchnz: number of patches in the x, y, and z directions
+        - grid_patchrx, grid_patchry, grid_patchrz: patch sizes in the x, y, and z directions
+        - nmax: maximum number of patches in the grid
+        - size: size of the grid
+        - Box: box coordinates
+        - up_to_level: level of refinement in the AMR grid (default is 4)
+        - ncores: number of cores to use for the computation (default is 1)
+        - verbose: boolean to print the progress of the computation (default is False)
+        
+    Returns:
+        - uniform_field: cleaned and projected field on a uniform grid
+        
+    Author: Marco Molina
+    '''
+    
+    if up_to_level > 4:
+        print("Warning: The resolution level is larger than 4. The code will take a long time to run.")
+        
+    clean_field = tools.clean_field(field, clus_cr0amr, clus_solapst, grid_npatch, up_to_level=up_to_level)
+    
+    uniform_field = a2u.main(box = Box[1:], up_to_level = up_to_level, nmax = nmax, size = size, npatch = grid_npatch, patchnx = grid_patchnx, patchny = grid_patchny,
+                            patchnz = grid_patchnz, patchrx = grid_patchrx, patchry = grid_patchry, patchrz = grid_patchrz,
+                            field = clean_field, ncores = ncores, verbose = verbose)
+        
+    return uniform_field
