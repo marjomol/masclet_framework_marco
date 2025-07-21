@@ -253,7 +253,7 @@ def dir_profile(field, cx,cy,cz,
 def radial_profile(field,cx,cy,cz,
                    npatch,patchrx,patchry,patchrz,patchnx,patchny,patchnz,size,nmax,
                    weight_field=None,
-                   binsr=None,dex_rbins=None,delta_rbins=None,rmin=None,rmax=None,
+                   binsr=None,rmin=None,rmax=None, nbins=None, logbins=False,
                    maxl=None,
                    interpolate=True, average="mean", Ncostheta=20, Nphi=20, use_tqdm=False):
     """
@@ -272,8 +272,8 @@ def radial_profile(field,cx,cy,cz,
         - weight_field (optional): weighting field to use to normalize the profile
         One and only one of these sets of arguments must be specified:
             - binsr: numpy vector specifying the radial bins
-            - rmin, rmax, dex_rbins: minimum and maximum radius, and logarithmic bin size
-            - rmin, rmax, delta_rbins: minimum and maximum radius, and linear bin size
+            - rmin, rmax, nbins, logbins: minimum and maximum radius, number of bins, wheter to used logarithmic bin sizes.
+                With this the logarithmic bin size (dex_rbins) or the linear bin size (delta_rbins) is calculated
         - interpolate: whether to interpolate the field values or not
         - average: type of average to use to combine the directional profiles. Can be "mean", "median" or "geometric"
         - Ncostheta: number of bins in the cos(theta) direction
@@ -284,6 +284,13 @@ def radial_profile(field,cx,cy,cz,
         - profile: radially-averaged profile
         - rrr: radial bins
     """
+
+    if logbins and (rmin is not None) and (rmax is not None) and (nbins is not None):
+        dex_rbins=np.log10(rmax/rmin)/nbins
+        delta_rbins=None
+    elif not logbins and (rmin is not None) and (rmax is not None) and (nbins is not None):
+        delta_rbins=(rmax-rmin)/nbins
+        dex_rbins=None
 
     dir_profiles, rrr, vec_costheta, vec_phi = dir_profile(field,cx,cy,cz,
                                                            npatch,patchrx,patchry,patchrz,patchnx,patchny,patchnz,size,nmax,

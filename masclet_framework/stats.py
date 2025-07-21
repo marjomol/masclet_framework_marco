@@ -16,15 +16,15 @@ import numpy as np
 import astropy.stats
 from scipy.stats import spearmanr, t
 from scipy.interpolate import UnivariateSpline
-import emcee
+# import emcee
 from masclet_framework import graphics
 from multiprocessing import Pool
 from scipy.stats import gaussian_kde
-import statsmodels.api as sm
-from sklearn.preprocessing import PolynomialFeatures
+# import statsmodels.api as sm
+# from sklearn.preprocessing import PolynomialFeatures
 from scipy import odr
-import uncertainties as unc
-import uncertainties.unumpy as unp
+# import uncertainties as unc
+# import uncertainties.unumpy as unp
 import logging
 
 def biweight_statistic(array, nmaxiter=100, tol=1e-4):

@@ -22,17 +22,19 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 from matplotlib.gridspec import GridSpec
-import seaborn as sns
+# import seaborn as sns
 import matplotlib.ticker as mticker
 from matplotlib.ticker import MaxNLocator
 from matplotlib.colors import ListedColormap
+from matplotlib.animation import FuncAnimation
+from matplotlib.colors import LogNorm
 import math
 from scipy.stats import gaussian_kde
 from scipy.ndimage import gaussian_filter
 from tqdm import tqdm
 from numba import jit, njit, prange, get_num_threads, set_num_threads
 from numba.typed import List
-
+import os
 
 # MASCLET FRAMEWORK MODULES
 from masclet_framework.profiles import locate_point
@@ -1535,3 +1537,158 @@ def projection_map_polars(field, normal_vector,
         return_vars.append(binsr)
 
     return tuple(return_vars)
+
+def zoom_animation_3D(arr, size, arrow_scale = 1, units = 'Mpc', title = 'Magnetic Field Seed Zoom', verbose = True, Save = False, DPI = 300, run = '_', folder = None):
+    '''
+    Generates an animation of the magnetic field seed in 3D with a zoom effect. Can be used for any other 3D spacial field.
+    
+    Args:
+        - arr: 3D array to animate
+        - size: size of the array in Mpc in the x direction
+        - arrow_scale: scale of the arrow in Mpc
+        - units: units of the arrow scale
+        - title: title of the animation
+        - verbose: boolean to print the progress of the function
+        - Save: boolean to save the animation or not
+        - DPI: dots per inch in the animation
+        - run: name of the run
+        - folder: folder to save the animation
+        
+    Returns:
+        - gif file with the animation
+        
+    Author: Marco Molina
+    '''
+    
+    # Ensure the array is 3D
+    assert arr.ndim == 3, "Input array must be 3D"
+    
+    nmax, nmay, nmaz = arr.shape
+    
+    dx = size / nmax  # Cell size in Mpc
+    
+    inter = 200
+    depth = 10
+    col = 'red'
+    
+    for m in range(1, nmax//2):
+        max_imdim = np.round((arrow_scale+m)/dx, 0).astype(int)
+        if max_imdim <= nmax//2:
+            max_frame = m
+        else:
+            break
+    
+    fig = plt.figure(figsize=(5, 5))
+    
+    def animate(frame):
+        plt.clf()
+        imdim = np.round((frame+arrow_scale)/dx, 0).astype(int)
+        section = np.sum(arr[(nmax//2 - imdim):(nmax//2 + imdim), (nmay//2 - imdim):(nmay//2 + imdim), (nmaz//2 - depth//2):(nmaz//2 + depth//2)], axis=2)
+        plt.imshow(section, cmap='viridis')
+        plt.title(title)
+        ctoMpc = arrow_scale/dx
+        plt.arrow(imdim, imdim, ctoMpc, 0, head_width=(ctoMpc/14), head_length=(ctoMpc/7), fc=col, ec=col)
+        plt.text(imdim, imdim-arrow_scale, f'{arrow_scale} {units}', color=col)
+
+    ani = FuncAnimation(fig, animate, frames = range(1, max_frame), interval=inter)
+    
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, 'data')
+    ani.save(data_dir + '/animation.gif', writer='pillow')
+    
+    if verbose == True:
+        print(f'Plotting... Magnetic Field Seed Zoom Animation computed')
+    
+    # Save the plots
+    if Save == True:
+        
+        if folder is None:
+            folder = os.getcwd()
+    
+        file_title = ' '.join(title.split()[:4])
+        ani.save(folder + f'/{file_title}_{run}_zoom.gif', writer='pillow', dpi = DPI)
+        
+def scan_animation_3D(arr, size, study_box, depth = 2, arrow_scale = 1, units = 'Mpc', title = 'Magnetic Field Seed Scan', verbose = True, Save = False, DPI = 300, run = '_', folder = None):
+    '''
+    Generates an animation of the magnetic field seed in 3D with a scan effect. Can be used for any other 3D spacial field.
+    
+    Args:
+        - arr: 3D array to animate
+        - size: size of the array in Mpc in the x direction
+        - study_box: percentage of the box to scan centered in the middle of the scanning plane. Must be a float in (0, 1]
+        - depth: depth of the scanning plane, the larger the depth the less frames the animation will have
+        - arrow_scale: scale of the arrow in Mpc
+        - units: units of the arrow scale
+        - title: title of the animation
+        - verbose: boolean to print the progress of the function
+        - Save: boolean to save the animation or not
+        - DPI: dots per inch in the animation
+        - run: name of the run
+        - folder: folder to save the animation
+        
+    Returns:
+        - gif file with the animation
+        
+    Author: Marco Molina
+    '''
+    
+    # Ensure the array is 3D
+    assert arr.ndim == 3, "Input array must be 3D"
+    assert 0 < study_box <= 1, "Study box must be a float in (0, 1]"
+    
+    nmax, nmay, nmaz = arr.shape
+    
+    dx = size / nmax  # Cell size in Mpc
+    
+    inter = 100
+    x_lsize = round(nmax//2 - nmax*study_box//2)
+    x_dsize = round(nmax//2 + nmax*study_box//2)
+    y_lsize = round(nmay//2 - nmay*study_box//2)
+    y_dsize = round(nmay//2 + nmay*study_box//2)
+    new_nmax = x_dsize - x_lsize # Para definir el tamaño de la flecha de referencia
+    col = 'red'
+    
+    fig = plt.figure(figsize=(5, 5))
+    
+    # Find the minimum and maximum values of the magnetic field among all the studied volume
+    all_values = []
+    for i in range(nmaz):
+        frame_data = arr[x_lsize:x_dsize, y_lsize:y_dsize, i]
+        all_values.extend(frame_data[frame_data > 0].flatten())
+
+    all_values = np.array(all_values)
+    min_value = np.percentile(all_values, 1)  # 1st percentile
+    max_value = np.percentile(all_values, 99.9)  # 99.9th percentile
+    print(min_value, max_value)
+        
+    # Create a logarithmic normalization for the color intensity and regulate the intensity of the color bar
+    norm = LogNorm(vmin=min_value, vmax=max_value)
+    
+    def animate(frame):
+        plt.clf()
+        section = np.sum(arr[x_lsize:x_dsize, y_lsize:y_dsize, (frame - depth//2):(frame + depth//2)], axis=2)
+        plt.imshow(section, cmap='viridis', norm=norm)
+        plt.title(title)
+        ctoMpc = arrow_scale/dx
+        plt.arrow((new_nmax - 4*new_nmax//5), (new_nmax - new_nmax//10), ctoMpc, 0, head_width=(ctoMpc/14), head_length=(ctoMpc/7), fc=col, ec=col)
+        plt.text((new_nmax - 4*new_nmax//5), (new_nmax - new_nmax//10) - 1.25 * arrow_scale, f'{arrow_scale} {units}', color=col)
+
+    ani = FuncAnimation(fig, animate, frames = range(depth, nmaz), interval=inter)
+    ani = FuncAnimation(fig, animate, frames = range(nmaz), interval=inter)
+    
+    
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.path.join(base_dir, 'data')
+    ani.save(data_dir + '/animation.gif', writer='pillow')
+    
+    if verbose == True:
+        print(f'Plotting... Magnetic Field Seed Scan Animation computed')
+    
+    # Save the plots
+    if Save == True:
+        
+        if folder is None:
+            folder = os.getcwd()
+    
+        file_title = ' '.join(title.split()[:4])
+        ani.save(folder + f'/{file_title}_{run}_scan.gif', writer='pillow', dpi = DPI)

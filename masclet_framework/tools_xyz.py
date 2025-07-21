@@ -607,7 +607,7 @@ def ellipsoidal_shape_cells(cellsrx, cellsry, cellsrz, cellsm, r, tol=1e-3, maxi
     return [semiax_x, semiax_y, semiax_z], [ppal_x, ppal_y, ppal_z]
 
 
-def vol_integral(field, units, zeta, cr0amr, solapst, npatch, patchrx, patchry, patchrz, patchnx, patchny, patchnz, size, nmax, coords, rad, kept_patches=None):
+def vol_integral(field, units, zeta, cr0amr, solapst, npatch, patchrx, patchry, patchrz, patchnx, patchny, patchnz, size, nmax, coords, rad, kept_patches=None, vol=False):
     """
     Given a scalar field and a sphere defined with a center (x,y,z) and a radious together with the patch structure, returns the volumetric integral of the field along the sphere.
 
@@ -625,21 +625,27 @@ def vol_integral(field, units, zeta, cr0amr, solapst, npatch, patchrx, patchry, 
         - coords: center of the sphere in a numpy array [x,y,z]
         - rad: radius of the sphere
         - kept_patches: boolean array to select the patches to be considered in the integration. True if the patch is kept, False if not. If None, all patches are kept.
+        - vol: if True, returns the volume of the region instead of the integral. Default is False.
 
     Returns:
         - integral: volumetric integral of the field along the sphere
+        
+    Author: Marco Molina
     """
     if kept_patches is None:
         total_npatch = len(field)
         kept_patches = np.ones((total_npatch,), dtype=bool)
         
-    vector_levels = create_vector_levels(npatch)
+    vector_levels = tools.create_vector_levels(npatch)
     
     dx = size/nmax
     
     a = 1 / (1 + zeta) # We compute the scale factor
     
     integral = 0
+    
+    if vol:
+        field = [np.ones_like(field[p]) for p in range(1 + np.sum(npatch))] # If vol is True, we just want the volume, so we set the field to 1
     
     for p in range(len(kept_patches)): # We run across all the patches
         
