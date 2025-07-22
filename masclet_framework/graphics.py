@@ -1545,8 +1545,8 @@ def zoom_animation_3D(arr, size, arrow_scale = 1, units = 'Mpc', title = 'Magnet
     Args:
         - arr: 3D array to animate
         - size: size of the array in Mpc in the x direction
-        - arrow_scale: scale of the arrow in Mpc
-        - units: units of the arrow scale
+        - arrow_scale: scale of the arrow in the provided units
+        - units: units of the arrow scale. Can be 'Mpc' or 'kpc'
         - title: title of the animation
         - verbose: boolean to print the progress of the function
         - Save: boolean to save the animation or not
@@ -1562,6 +1562,8 @@ def zoom_animation_3D(arr, size, arrow_scale = 1, units = 'Mpc', title = 'Magnet
     
     # Ensure the array is 3D
     assert arr.ndim == 3, "Input array must be 3D"
+    assert arrow_scale > 0, "Arrow scale must be a positive integer"
+    assert units in ['Mpc', 'kpc'], "Units must be 'Mpc' or 'kpc'"
     
     nmax, nmay, nmaz = arr.shape
     
@@ -1580,15 +1582,21 @@ def zoom_animation_3D(arr, size, arrow_scale = 1, units = 'Mpc', title = 'Magnet
     
     fig = plt.figure(figsize=(5, 5))
     
+    if units == 'Mpc':
+        ctou = arrow_scale/dx
+    elif units == 'kpc':
+        ctou = arrow_scale/(dx * 1000)
+    
     def animate(frame):
         plt.clf()
         imdim = np.round((frame+arrow_scale)/dx, 0).astype(int)
         section = np.sum(arr[(nmax//2 - imdim):(nmax//2 + imdim), (nmay//2 - imdim):(nmay//2 + imdim), (nmaz//2 - depth//2):(nmaz//2 + depth//2)], axis=2)
         plt.imshow(section, cmap='viridis')
         plt.title(title)
-        ctoMpc = arrow_scale/dx
-        plt.arrow(imdim, imdim, ctoMpc, 0, head_width=(ctoMpc/14), head_length=(ctoMpc/7), fc=col, ec=col)
+        plt.arrow(imdim, imdim, ctou, 0, head_width=(ctou/14), head_length=(ctou/7), fc=col, ec=col)
         plt.text(imdim, imdim-arrow_scale, f'{arrow_scale} {units}', color=col)
+        plt.xlabel('x cells')
+        plt.ylabel('y cells')
 
     ani = FuncAnimation(fig, animate, frames = range(1, max_frame), interval=inter)
     
@@ -1608,6 +1616,7 @@ def zoom_animation_3D(arr, size, arrow_scale = 1, units = 'Mpc', title = 'Magnet
         file_title = ' '.join(title.split()[:4])
         ani.save(folder + f'/{file_title}_{run}_zoom.gif', writer='pillow', dpi = DPI)
         
+        
 def scan_animation_3D(arr, size, study_box, depth = 2, arrow_scale = 1, units = 'Mpc', title = 'Magnetic Field Seed Scan', verbose = True, Save = False, DPI = 300, run = '_', folder = None):
     '''
     Generates an animation of the magnetic field seed in 3D with a scan effect. Can be used for any other 3D spacial field.
@@ -1617,8 +1626,8 @@ def scan_animation_3D(arr, size, study_box, depth = 2, arrow_scale = 1, units = 
         - size: size of the array in Mpc in the x direction
         - study_box: percentage of the box to scan centered in the middle of the scanning plane. Must be a float in (0, 1]
         - depth: depth of the scanning plane, the larger the depth the less frames the animation will have
-        - arrow_scale: scale of the arrow in Mpc
-        - units: units of the arrow scale
+        - arrow_scale: scale of the arrow in the provided units
+        - units: units of the arrow scale. Can be 'Mpc' or 'kpc'
         - title: title of the animation
         - verbose: boolean to print the progress of the function
         - Save: boolean to save the animation or not
@@ -1632,9 +1641,11 @@ def scan_animation_3D(arr, size, study_box, depth = 2, arrow_scale = 1, units = 
     Author: Marco Molina
     '''
     
-    # Ensure the array is 3D
     assert arr.ndim == 3, "Input array must be 3D"
     assert 0 < study_box <= 1, "Study box must be a float in (0, 1]"
+    assert depth > 0, "Depth must be a positive integer"
+    assert arrow_scale > 0, "Arrow scale must be a positive integer"
+    assert units in ['Mpc', 'kpc'], "Units must be 'Mpc' or 'kpc'"
     
     nmax, nmay, nmaz = arr.shape
     
@@ -1664,14 +1675,22 @@ def scan_animation_3D(arr, size, study_box, depth = 2, arrow_scale = 1, units = 
     # Create a logarithmic normalization for the color intensity and regulate the intensity of the color bar
     norm = LogNorm(vmin=min_value, vmax=max_value)
     
+    if units == 'Mpc':
+        ctou = arrow_scale/dx
+    elif units == 'kpc':
+        ctou = arrow_scale/(dx * 1000)
+
     def animate(frame):
         plt.clf()
         section = np.sum(arr[x_lsize:x_dsize, y_lsize:y_dsize, (frame - depth//2):(frame + depth//2)], axis=2)
         plt.imshow(section, cmap='viridis', norm=norm)
         plt.title(title)
-        ctoMpc = arrow_scale/dx
-        plt.arrow((new_nmax - 4*new_nmax//5), (new_nmax - new_nmax//10), ctoMpc, 0, head_width=(ctoMpc/14), head_length=(ctoMpc/7), fc=col, ec=col)
-        plt.text((new_nmax - 4*new_nmax//5), (new_nmax - new_nmax//10) - 1.25 * arrow_scale, f'{arrow_scale} {units}', color=col)
+        plt.arrow((new_nmax - 4*new_nmax//5), (new_nmax - new_nmax//10), ctou, 0, head_width=(ctou/14), head_length=(ctou/7), fc=col, ec=col)
+        text_x = (new_nmax - 4*new_nmax//5) + ctou / 2  # Centered above the arrow
+        text_y = (new_nmax - new_nmax//10) - 0.03 * new_nmax  # Small offset above the arrow
+        plt.text(text_x, text_y, f'{arrow_scale} {units}', color=col, ha='center', va='bottom', fontsize=10)
+        plt.xlabel('x cells')
+        plt.ylabel('y cells')
 
     ani = FuncAnimation(fig, animate, frames = range(depth, nmaz), interval=inter)
     ani = FuncAnimation(fig, animate, frames = range(nmaz), interval=inter)
