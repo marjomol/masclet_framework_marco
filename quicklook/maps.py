@@ -228,6 +228,9 @@ def plot_maps(args, grid, images, centre, width, centre_info, centre_tag, width_
                      + '\ncentre (%.3f, %.3f, %.3f) cMpc: %s' % (tuple(centre) + (centre_info,)), fontsize=10)
         fig.tight_layout()
         view = '%s_%s_%s_w%g_res%d' % ('box' if args.whole_box else 'win', args.mode, args.axis, width_label, args.res_level)
+        # with a subset of the quantities, their names go in the file name (e.g. a DM-only view at another resolution)
+        if keys != list(common.QUANTITIES):
+            view += '_' + '-'.join(keys)
         path = common.output_name(args, view, centre_tag)
         fig.savefig(path)
         plt.close(fig)
