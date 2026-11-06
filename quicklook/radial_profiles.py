@@ -77,7 +77,7 @@ def compute_profiles(args, grid, gas, dm, quantities, centre, rmin, rmax):
     return np.asarray(r), out
 
 
-def plot_profiles(args, grid, r, prof, centre, centre_info, radius):
+def plot_profiles(args, grid, r, prof, centre, centre_info, centre_tag, radius):
     """
     Figure with one panel per quantity (log-log, radius in ckpc) and text table of the profiles.
 
@@ -88,6 +88,7 @@ def plot_profiles(args, grid, r, prof, centre, centre_info, radius):
         prof: dictionary of profiles
         centre: centre (cMpc)
         centre_info: description of the centre (str)
+        centre_tag: label of the centre for the file name (str)
         radius: radius of the region (cMpc), for the file name
 
     Returns:
@@ -115,10 +116,10 @@ def plot_profiles(args, grid, r, prof, centre, centre_info, radius):
                                          % (args.ncostheta, args.nphi))
                      + '\ncentre (%.3f, %.3f, %.3f) cMpc: %s' % (tuple(centre) + (centre_info,)), fontsize=10)
         fig.tight_layout()
-        path = common.output_name(args, view)
+        path = common.output_name(args, view, centre_tag)
         fig.savefig(path)
         plt.close(fig)
-    table = common.output_name(args, view, ext='txt')
+    table = common.output_name(args, view, centre_tag, ext='txt')
     with open(table, 'w') as f:
         f.write('# %s\n# centre (%.6f, %.6f, %.6f) cMpc: %s\n' % ((common.figure_title(args, grid),) + tuple(centre)
                                                                 + (centre_info,)))
@@ -147,7 +148,7 @@ def main():
     dm = common.read_dm(args) if 'dm' in quantities else None
     if dm is not None:
         timer.step('read cldm (deltadm) up to L%d' % args.level)
-    centre, centre_info = common.find_centre(args, grid, common.derived_fields(gas)['rho'], gas)
+    centre, centre_info, centre_tag = common.find_centre(args, grid, common.derived_fields(gas)['rho'], gas)
     gc.collect()
     timer.step('centre (%.4f, %.4f, %.4f): %s' % (tuple(centre) + (centre_info,)))
 
@@ -155,7 +156,7 @@ def main():
     rmin = grid['size'] / grid['nmax'] / 2 ** args.res_level
     r, prof = compute_profiles(args, grid, gas, dm, quantities, centre, rmin, radius)
     timer.step('profiles: %d bins from %.2f to %.0f ckpc' % (len(r), 1e3 * rmin, 1e3 * radius))
-    path, table = plot_profiles(args, grid, r, prof, centre, centre_info, radius)
+    path, table = plot_profiles(args, grid, r, prof, centre, centre_info, centre_tag, radius)
     timer.step('figure %s' % path)
 
 

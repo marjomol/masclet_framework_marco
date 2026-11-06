@@ -187,7 +187,7 @@ def projection_images(args, grid, fields, quantities, centre, width, depth, whol
     return images
 
 
-def plot_maps(args, grid, images, centre, width, centre_info, width_label):
+def plot_maps(args, grid, images, centre, width, centre_info, centre_tag, width_label):
     """
     Figure with one panel per quantity: colour bar with units, scale bar in ckpc and title.
 
@@ -198,6 +198,7 @@ def plot_maps(args, grid, images, centre, width, centre_info, width_label):
         centre: centre of the view (cMpc)
         width: side of the window (cMpc)
         centre_info: description of the centre (str)
+        centre_tag: label of the centre for the file name (str)
         width_label: side of the window asked for, for the file name (cMpc)
 
     Returns:
@@ -230,7 +231,7 @@ def plot_maps(args, grid, images, centre, width, centre_info, width_label):
                      + '\ncentre (%.3f, %.3f, %.3f) cMpc: %s' % (tuple(centre) + (centre_info,)), fontsize=10)
         fig.tight_layout()
         view = '%s_%s_%s_w%g_res%d' % ('box' if args.whole_box else 'win', args.mode, args.axis, width_label, args.res_level)
-        path = common.output_name(args, view)
+        path = common.output_name(args, view, centre_tag)
         fig.savefig(path)
         plt.close(fig)
     return path
@@ -256,7 +257,7 @@ def main():
     if dm is not None:
         timer.step('read cldm (deltadm) up to L%d' % args.level)
     fields = amr_fields(gas, dm, quantities)
-    centre, centre_info = common.find_centre(args, grid, fields['rho'], gas)
+    centre, centre_info, centre_tag = common.find_centre(args, grid, fields['rho'], gas)
     del gas, dm
     gc.collect()
     timer.step('centre (%.4f, %.4f, %.4f): %s' % (tuple(centre) + (centre_info,)))
@@ -274,7 +275,7 @@ def main():
         images = projection_images(args, grid, fields, quantities, centre, width, args.depth_used, args.whole_box)
     timer.step('%s images %s at res L%d' % (args.mode, 'x'.join(map(str, next(iter(images.values())).shape)),
                                             args.res_level))
-    path = plot_maps(args, grid, images, centre, width, centre_info, width_label)
+    path = plot_maps(args, grid, images, centre, width, centre_info, centre_tag, width_label)
     timer.step('figure %s' % path)
 
 

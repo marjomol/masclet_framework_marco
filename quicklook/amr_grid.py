@@ -45,7 +45,7 @@ def level_colors(max_level, min_level=0):
     return plt.get_cmap(LEVEL_CMAP)(np.linspace(0.2, 0.8, 1 + max_level - min_level))
 
 
-def plot_grid(args, grid, centre, width, fractions, leaf_volume, centre_info, width_label):
+def plot_grid(args, grid, centre, width, fractions, leaf_volume, centre_info, centre_tag, width_label):
     """
     Figure: patch outlines in the slab (left) and leaf volume fraction per level in the window (right).
 
@@ -57,6 +57,7 @@ def plot_grid(args, grid, centre, width, fractions, leaf_volume, centre_info, wi
         fractions: leaf volume fraction of each level in the window
         leaf_volume: leaf volume found in the window (cMpc^3)
         centre_info: description of the centre (str)
+        centre_tag: label of the centre for the file name (str)
         width_label: side of the window asked for, for the file name (cMpc)
 
     Returns:
@@ -103,7 +104,7 @@ def plot_grid(args, grid, centre, width, fractions, leaf_volume, centre_info, wi
                      + '\ncentre (%.3f, %.3f, %.3f) cMpc: %s' % (tuple(centre) + (centre_info,)), fontsize=10)
         fig.tight_layout()
         path = common.output_name(args, '%s_amr_%s_w%g_slab%g' % ('box' if args.whole_box else 'win', args.axis,
-                                                                  width_label, args.slab))
+                                                                  width_label, args.slab), centre_tag)
         fig.savefig(path)
         plt.close(fig)
     return path
@@ -122,7 +123,7 @@ def main():
     grid = common.read_grid(args)
     gas = common.read_gas(args, pressure=False, temperature=False, magnetic=False)
     timer.step('read grids + clus (delta, cr0amr, solapst) up to L%d' % args.level)
-    centre, centre_info = common.find_centre(args, grid, common.derived_fields(gas)['rho'], gas)
+    centre, centre_info, centre_tag = common.find_centre(args, grid, common.derived_fields(gas)['rho'], gas)
     timer.step('centre (%.4f, %.4f, %.4f): %s' % (tuple(centre) + (centre_info,)))
 
     width_label, _ = common.view_window(args, grid, centre)
@@ -132,7 +133,7 @@ def main():
         raise SystemExit('The window leaves the simulation box; reduce --width or move the centre')
     fractions, leaf_volume = common.level_volume_fractions(grid, gas, box, args.level)
     timer.step('leaf volume fractions: ' + ' '.join('L%d %.4g' % (l, f) for l, f in enumerate(fractions)))
-    path = plot_grid(args, grid, centre, width, fractions, leaf_volume, centre_info, width_label)
+    path = plot_grid(args, grid, centre, width, fractions, leaf_volume, centre_info, centre_tag, width_label)
     timer.step('figure %s' % path)
 
 

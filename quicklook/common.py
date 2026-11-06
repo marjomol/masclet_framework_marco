@@ -364,30 +364,32 @@ def find_centre(args, grid, rho, gas):
         gas: dictionary of read_gas (cr0amr, solapst)
 
     Returns:
-        numpy array (x, y, z) in cMpc and a short description of how it was found (str)
+        numpy array (x, y, z) in cMpc, a short description of how it was found (str) and the label of the centre
+        for the file names (str): cpeakL<peak level> (with 's' when --shrink), casohf, cgiven or cbox
 
     Author: Marco Molina Pradillo
     """
     if args.whole_box:
-        return np.zeros(3), 'box centre'
+        return np.zeros(3), 'box centre', 'cbox'
     kind = args.center[0].lower()
     if kind == 'peak':
         lpeak = min(args.peak_level, args.level)
         c = densest_leaf_cell(grid, rho, leaf_mask(grid, gas, lpeak))
         what = 'densest gas cell up to L%d' % lpeak
         if not args.shrink:
-            return c, what
+            return c, what, 'cpeakL%d' % lpeak
         dx_res = grid['size'] / grid['nmax'] / 2 ** args.res_level
         c2 = shrinking_sphere(grid, rho, leaf_mask(grid, gas, args.level), c, args.shrink_r0, 4 * dx_res)
-        return c2, 'shrinking sphere from the %s (shift %.1f ckpc)' % (what, 1e3 * np.linalg.norm(c2 - c))
+        return c2, 'shrinking sphere from the %s (shift %.1f ckpc)' % (what, 1e3 * np.linalg.norm(c2 - c)), \
+            'cpeakL%ds' % lpeak
     if kind == 'asohf':
         halos_dir = args.halos_dir or args.sim_dir
         if not os.path.exists(os.path.join(halos_dir, 'families%05d' % args.it)):
             raise SystemExit('--center asohf: no families%05d in %s' % (args.it, halos_dir))
         c, R, hid = asohf_centre(halos_dir, args.it)
-        return c, 'ASOHF halo %d (most massive host), R = %.3f cMpc' % (hid, R)
+        return c, 'ASOHF halo %d (most massive host), R = %.3f cMpc' % (hid, R), 'casohf'
     if len(args.center) == 3:
-        return np.array([float(v) for v in args.center]), 'given'
+        return np.array([float(v) for v in args.center]), 'given', 'cgiven'
     raise SystemExit("--center: 'peak', 'asohf' or X Y Z")
 
 
@@ -534,13 +536,15 @@ def figure_title(args, grid, extra=''):
     return title + (' | ' + extra if extra else '')
 
 
-def output_name(args, view, ext='png'):
+def output_name(args, view, centre_tag, ext='png'):
     """
-    Path of a figure: <out>/<sim>_itNNNNN_L<level>_<view>.<ext>.
+    Path of a figure or table: <out>/<sim>_itNNNNN_L<level>_<centre_tag>_<view>.<ext>, with the label of the centre
+    returned by find_centre.
 
     Author: Marco Molina Pradillo
     """
-    return os.path.join(args.out, '%s_it%05d_L%d_%s.%s' % (args.sim_name, args.it, args.level, view, ext))
+    return os.path.join(args.out, '%s_it%05d_L%d_%s_%s.%s' % (args.sim_name, args.it, args.level, centre_tag, view,
+                                                              ext))
 
 
 # SECTION: resources
