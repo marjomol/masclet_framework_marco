@@ -93,9 +93,6 @@ def slice_images(args, grid, fields, quantities, centre, width, res):
     h[o['axes'][0]], v[o['axes'][1]] = 1, 1
     # slice_map samples (i - n/2 + 1) res along h and (j - n/2) res along v: shift half a pixel to centre the pixels
     c = np.array(centre) - 0.5 * res * h + 0.5 * res * v
-    # and 1e-4 pixels off the cell centres: locate_point (buf=0.5) accepts a point on the centre of the last cell of a
-    # patch, and the interpolation then reads one cell past the patch (IndexError in slice_map)
-    c = c + 1e-4 * res * (h + v + np.array(o['normal']))
     geometry = (grid['npatch'], grid['patchnx'], grid['patchny'], grid['patchnz'], grid['patchrx'], grid['patchry'],
                 grid['patchrz'], grid['size'], grid['nmax'], args.level)
 
