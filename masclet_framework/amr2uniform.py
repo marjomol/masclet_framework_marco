@@ -11,7 +11,7 @@ import numba
 import numpy as np
 import sys
 import multiprocessing
-import tools
+from masclet_framework import tools
 
 # DESCRIPTION
 # This function interpolates the AMR field to a uniform grid

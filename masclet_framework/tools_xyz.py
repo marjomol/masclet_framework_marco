@@ -24,7 +24,7 @@ from masclet_framework import cosmo_tools, tools
 
 from scipy import optimize
 
-import amr2uniform as a2u
+from masclet_framework import amr2uniform as a2u
 
 
 # FUNCTIONS DEFINED IN THIS MODULE
