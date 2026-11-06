@@ -99,6 +99,8 @@ def build_parser(description):
     region.add_argument('--whole-box', action='store_true', help='the whole box (the centre is then the box centre)')
     parser.add_argument('--res-level', type=int, default=None,
                         help='AMR level that sets the resolution of the output (default: --level)')
+    parser.add_argument('--pmax', type=float, default=99.5,
+                        help='upper percentile of the colour scales of the maps (default 99.5; 100 = maximum)')
     parser.add_argument('--out', default='.', help='output folder')
     return parser
 
@@ -463,15 +465,16 @@ def figure_style():
         yield
 
 
-def color_norm(q, image, vmin=None, vmax=None):
+def color_norm(q, image, vmin=None, vmax=None, pmax=99.5):
     """
-    Colour normalisation of a quantity: logarithmic or linear (QUANTITIES), limits from the 0.5 and 99.5 percentiles
+    Colour normalisation of a quantity: logarithmic or linear (QUANTITIES), limits from the 0.5 and pmax percentiles
     of the finite positive values unless given.
 
     Args:
         q: key of QUANTITIES
         image: 2d array
         vmin, vmax: optional limits
+        pmax: upper percentile (default 99.5; 100 = maximum)
 
     Returns:
         matplotlib.colors.Normalize instance
@@ -481,7 +484,7 @@ def color_norm(q, image, vmin=None, vmax=None):
     v = image[np.isfinite(image)]
     if QUANTITIES[q]['log']:
         v = v[v > 0]
-    lo, hi = (np.percentile(v, [0.5, 99.5]) if v.size else (1., 10.))
+    lo, hi = (np.percentile(v, [0.5, pmax]) if v.size else (1., 10.))
     vmin = lo if vmin is None else vmin
     vmax = hi if vmax is None else vmax
     return colors.LogNorm(vmin=vmin, vmax=vmax) if QUANTITIES[q]['log'] else colors.Normalize(vmin=vmin, vmax=vmax)

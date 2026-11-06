@@ -218,7 +218,7 @@ def plot_maps(args, grid, images, centre, width, centre_info, centre_tag, width_
             cmap = plt.get_cmap(common.QUANTITIES[q]['cmap']).copy()
             cmap.set_bad(cmap(0.))
             cmap.set_under(cmap(0.))
-            im = ax.imshow(images[q].T, extent=extent, cmap=cmap, norm=common.color_norm(q, images[q]))
+            im = ax.imshow(images[q].T, extent=extent, cmap=cmap, norm=common.color_norm(q, images[q], pmax=args.pmax))
             common.add_colorbar(fig, ax, im, q)
             common.add_scale_bar(ax, width)
             ax.set_xlabel('%s [cMpc]' % AXIS_NAMES[o['axes'][0]])
