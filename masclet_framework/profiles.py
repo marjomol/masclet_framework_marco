@@ -444,7 +444,7 @@ def dir_profile_particles(particles_field, cx,cy,cz,size, tree=None,
     # Check normalization is properly specified
     if normalize not in ['volume','number','weight']:
         raise ValueError('Wrong specification of normalize')
-    elif normalize is 'weight' and (type(weight) is not np.ndarray or weight.size != particles_field.size):
+    elif normalize == 'weight' and (type(weight) is not np.ndarray or weight.size != particles_field.size):
         raise ValueError('Wrong specification of weight')
 
     # Check tree is properly specified
@@ -502,7 +502,8 @@ def dir_profile_particles(particles_field, cx,cy,cz,size, tree=None,
 def radial_profile_particles(particles_field, cx,cy,cz,size, tree=None,
                 binsr=None, rmin=None, rmax=None, dex_rbins=None, delta_rbins=None,
                 num_neigh=64, force_resol=None, normalize='volume', weight=None,
-                use_tqdm=False, average="mean", Ncostheta=20, Nphi=20):
+                is_weight_additive=True, use_tqdm=False, average="mean", Ncostheta=20, Nphi=20,
+                preop=None, postop=None):
     """
     Computes the radially-average profile of a field defined by a set of particles around a given center (cx,cy,cz). 
     The bins can be specified in three ways:
@@ -529,10 +530,17 @@ def radial_profile_particles(particles_field, cx,cy,cz,size, tree=None,
             by a weighting field ("weight"). If "weight" is specified, the argument "weight" must be specified as well.
         - weight: weighting field to use to normalize the profile. Must be a one-dimensional numpy array, the same size as particles_field.
             Only used if normalize="weight".
+        - is_weight_additive: if True, the weight field is assumed to be additive (e.g., mass). If False, it is assumed to be non-additive (e.g., density).
+            Only used if normalize="weight".
         - use_tqdm: whether to use tqdm to show a progress bar or not. Default: False.
         - average: type of average to use to combine the directional profiles. Must be "mean", "median" or "geometric".
         - Ncostheta: number of bins in the cos(theta) direction.
         - Nphi: number of bins in the phi direction.
+        - preop: function to apply to the directional profiles before the directional averaging. Should work with numpy arrays.
+            This can be applied, e.g., to compute a mean profile of rho^2, instead of rho.
+            Default: None (no operation is performed).
+        - postop: function to apply to the directional profiles after the directional averaging (inverse of preop, if any). Should work with numpy arrays.
+            Default: None (no operation is performed).
     Returns:
         - profile: radially-averaged profile
         - rrr: radial bins
@@ -543,18 +551,43 @@ def radial_profile_particles(particles_field, cx,cy,cz,size, tree=None,
                 num_neigh=num_neigh, force_resol=force_resol, normalize=normalize, weight=weight,
                 use_tqdm=use_tqdm, binsphi=Nphi, binscostheta=Ncostheta)
 
+    if normalize == 'weight':
+        dir_profiles_weight, rrr, vec_costheta, vec_phi = dir_profile_particles(weight, cx, cy, cz, size, tree=tree,
+                binsr=binsr, rmin=rmin, rmax=rmax, dex_rbins=dex_rbins, delta_rbins=delta_rbins,
+                num_neigh=num_neigh, force_resol=force_resol, normalize='volume' if is_weight_additive else 'number',
+                use_tqdm=use_tqdm, binsphi=Nphi, binscostheta=Ncostheta)
+
+    if preop is not None:
+        dir_profiles = preop(dir_profiles)
+
     # Combine directional profiles
-    if average=="mean":
-        profile=np.mean(dir_profiles,axis=(0,1))
-    elif average=="median":
-        profile=np.median(dir_profiles,axis=(0,1))
-    elif average=="geometric":
-        profile=np.exp(np.mean(np.log(dir_profiles),axis=(0,1)))
-    elif type(average) is list or type(average) is np.ndarray: # list of percentiles
-        assert all([0<=p<=100 for p in average]), "Percentiles must be between 0 and 100"
-        profile={'perc'+str(p): np.percentile(dir_profiles, p, axis=(0,1)) for p in average}
-    else:
-        raise ValueError('Wrong specification of average')
+    if normalize != 'weight':
+        if average=="mean":
+            profile=np.mean(dir_profiles,axis=(0,1))
+        elif average=="median":
+            profile=np.median(dir_profiles,axis=(0,1))
+        elif average=="geometric":
+            profile=np.exp(np.mean(np.log(dir_profiles),axis=(0,1)))
+        elif type(average) is list or type(average) is np.ndarray: # list of percentiles
+            assert all([0<=p<=100 for p in average]), "Percentiles must be between 0 and 100"
+            profile={'perc'+str(p): np.percentile(dir_profiles, p, axis=(0,1)) for p in average}
+        else:
+            raise ValueError('Wrong specification of average')
+    else: # normalize == 'weight' --> weighted average
+        if average=="mean":
+            profile = np.mean(dir_profiles * dir_profiles_weight, axis=(0,1)) / np.mean(dir_profiles_weight, axis=(0,1))
+        elif average=="median":
+            profile = stats.weighted_median(dir_profiles, dir_profiles_weight, axes=(0,1))
+        elif average=="geometric":
+            profile = np.exp(np.mean(np.log(dir_profiles * dir_profiles_weight), axis=(0,1)) / np.mean(np.log(dir_profiles_weight), axis=(0,1)))
+        elif type(average) is list or type(average) is np.ndarray: # list of percentiles
+            assert all([0<=p<=100 for p in average]), "Percentiles must be between 0 and 100"
+            profile={'perc'+str(p): stats.weighted_percentile(dir_profiles, dir_profiles_weight, p, axes=(0,1)) for p in average}
+        else:
+            raise ValueError('Wrong specification of average')
+    
+    if postop is not None:
+        profile = postop(profile)
 
     return profile, rrr
 
@@ -627,15 +660,15 @@ def average_from_profile(rprof, prof, prof_weight=None, rmin=None, rmax=None, cu
     return num / den
 
 
-def stack_profiles(list_r, list_profiles, stacking_method='median', rmin=None, rmax=None, nbins=None, logbins=True, logloginterp=True, logstack=False,
+def stack_profiles(list_r_input, list_profiles_input, stacking_method='median', rmin=None, rmax=None, nbins=None, logbins=True, logloginterp=True, logstack=False,
                    return_list_profiles=False):
     """ 
     Stack profiles using a specified method (mean, median, biweight, mode), taking 
     care of resampling the profiles to a common grid.
 
     Args:
-        - list_r: list of radial grids
-        - list_profiles: list of profiles to stack
+        - list_r_input: list of radial grids
+        - list_profiles_input: list of profiles to stack
         - stacking_method: method to stack the profiles. Can be 'mean', 'median', 'biweight' or 'mode'.
             Also, a list of percentiles can be specified.
         - rmin: minimum radius (default: maximum of the minimums of the input radial grids)
@@ -653,6 +686,9 @@ def stack_profiles(list_r, list_profiles, stacking_method='median', rmin=None, r
             If return_list_profiles is True, instead of the stacked profile, the list of resampled profiles is returned.
             If stacking_method is a list of percentiles, a dictionary with the percentiles is returned.
     """ 
+
+    list_r = [r.copy() for r in list_r_input]
+    list_profiles = [p.copy() for p in list_profiles_input]
 
     # interpolate profiles to a common grid
     if rmin is None:
@@ -711,10 +747,11 @@ def stack_profiles(list_r, list_profiles, stacking_method='median', rmin=None, r
         output_is_dict = True
 
     if logstack:
-        stacked_profile = 10**stacked_profile
-        if output_is_dict:
-            stacked_profile = {k: 10**v for k,v in stacked_profile.items()}
-        
+        #stacked_profile = 10**stacked_profile
+        if not output_is_dict:
+            stacked_profile = 10**stacked_profile 
+        else:
+            stacked_profile = {k: 10**v for k,v in stacked_profile.items()} 
     return r, stacked_profile
 
 
