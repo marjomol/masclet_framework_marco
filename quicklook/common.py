@@ -320,7 +320,8 @@ def shrinking_sphere(grid, rho, leaves, centre, r_start, r_min, factor=0.8):
         msum, mpos = 0., np.zeros(3)
         for ip, (x, y, z), dv in patches:
             d = [((c - c0 + size / 2) % size) - size / 2 for c, c0 in zip((x, y, z), centre)]
-            if min(np.abs(d[0]).min(), np.abs(d[1]).min(), np.abs(d[2]).min()) > r:
+            # skip the patch when, along some axis, all its cells are farther than r
+            if max(np.abs(d[0]).min(), np.abs(d[1]).min(), np.abs(d[2]).min()) > r:
                 continue
             dx, dy, dz = np.meshgrid(*d, indexing='ij')
             inside = leaves[ip] & (dx ** 2 + dy ** 2 + dz ** 2 < r ** 2)
