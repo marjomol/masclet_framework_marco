@@ -100,6 +100,9 @@ def plot_profiles(args, grid, r, prof, centre, centre_info, centre_tag, radius):
     ncol = min(3, len(keys))
     nrow = int(np.ceil(len(keys) / ncol))
     view = 'profiles_r%g_res%d' % (radius, args.res_level)
+    # with a subset of the quantities, their names go in the file names (figure and table), as in maps.py
+    if keys != list(common.QUANTITIES):
+        view += '_' + '-'.join(keys)
     with common.figure_style():
         fig, axs = plt.subplots(nrow, ncol, figsize=(4.0 * ncol, 3.2 * nrow), squeeze=False)
         for ax in axs.flat[len(keys):]:
