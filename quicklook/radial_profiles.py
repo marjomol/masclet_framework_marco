@@ -100,6 +100,8 @@ def plot_profiles(args, grid, r, prof, centre, centre_info, centre_tag, radius):
     ncol = min(3, len(keys))
     nrow = int(np.ceil(len(keys) / ncol))
     view = 'profiles_r%g_res%d' % (radius, args.res_level)
+    # sampling options away from their defaults: radial bins (nb), directions in cos(theta) (nct) and in phi (nph)
+    view += common.option_suffix(args, [('nbins', 'nb'), ('ncostheta', 'nct'), ('nphi', 'nph')])
     # with a subset of the quantities, their names go in the file names (figure and table), as in maps.py
     if keys != list(common.QUANTITIES):
         view += '_' + '-'.join(keys)

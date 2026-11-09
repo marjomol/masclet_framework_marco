@@ -118,6 +118,7 @@ def parse_arguments(parser):
     Author: Marco Molina Pradillo
     """
     args = parser.parse_args()
+    args.defaults = {action.dest: action.default for action in parser._actions}  # for option_suffix
     args.sim_dir = os.path.abspath(args.sim_dir)
     params = os.path.abspath(args.params)
     args.params_dir = os.path.dirname(params) if params.endswith('.json') else params
@@ -368,7 +369,8 @@ def find_centre(args, grid, rho, gas):
 
     Returns:
         numpy array (x, y, z) in cMpc, a short description of how it was found (str) and the label of the centre
-        for the file names (str): cpeakL<peak level> (with 's' when --shrink), casohf, cgiven or cbox
+        for the file names (str): cpeakL<peak level> (with 's' when --shrink), casohf, c_x<X>_y<Y>_z<Z> (given
+        centre, 3 decimals) or cbox
 
     Author: Marco Molina Pradillo
     """
@@ -392,7 +394,8 @@ def find_centre(args, grid, rho, gas):
         c, R, hid = asohf_centre(halos_dir, args.it)
         return c, 'ASOHF halo %d (most massive host), R = %.3f cMpc' % (hid, R), 'casohf'
     if len(args.center) == 3:
-        return np.array([float(v) for v in args.center]), 'given', 'cgiven'
+        c = np.array([float(v) for v in args.center])
+        return c, 'given', 'c_x%.3f_y%.3f_z%.3f' % tuple(c)
     raise SystemExit("--center: 'peak', 'asohf' or X Y Z")
 
 
@@ -538,6 +541,24 @@ def figure_title(args, grid, extra=''):
     """
     title = '%s | it %d | z = %.3f | L%d' % (args.sim_name, args.it, grid['zeta'], args.level)
     return title + (' | ' + extra if extra else '')
+
+
+def option_suffix(args, options):
+    """
+    Part of a view name for the options that differ from their default value, so that views made with other values
+    do not overwrite each other; empty with the default values (names as before).
+
+    Args:
+        args: parsed command line (parse_arguments, with args.defaults)
+        options: list of (option dest, label), e.g. [('pmax', 'p')]
+
+    Returns:
+        str, e.g. '_d2_p100' ('_' + label + value for each option not at its default, %g format)
+
+    Author: Marco Molina Pradillo
+    """
+    return ''.join('_%s%g' % (label, getattr(args, dest)) for dest, label in options
+                   if getattr(args, dest) is not None and getattr(args, dest) != args.defaults.get(dest))
 
 
 def output_name(args, view, centre_tag, ext='png'):
