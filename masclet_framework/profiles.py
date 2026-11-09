@@ -54,19 +54,20 @@ def locate_point(x,y,z,npatch,patchrx,patchry,patchrz,patchnx,patchny,patchnz,si
         low2=npatch[0:l+1].sum()
         dxpa=size/nmax/2**l
         for ipatch in range(low1,low2+1):
+            # half-open [x1,x2): with buf=0.5, a point on the last cell centre would make the CIC interpolation read cell n
             x1=patchrx[ipatch]+(buf-1)*dxpa
             x2=patchrx[ipatch]+(patchnx[ipatch]-1-buf)*dxpa
-            if x1>x or x2<x:
+            if x1>x or x2<=x:
                 continue
 
             y1=patchry[ipatch]+(buf-1)*dxpa
             y2=patchry[ipatch]+(patchny[ipatch]-1-buf)*dxpa
             #print(y1,y2)
-            if y1>y or y2<y:
+            if y1>y or y2<=y:
                 continue
             z1=patchrz[ipatch]+(buf-1)*dxpa
             z2=patchrz[ipatch]+(patchnz[ipatch]-1-buf)*dxpa
-            if z1>z or z2<z:
+            if z1>z or z2<=z:
                 continue
             
             f_patch=ipatch
