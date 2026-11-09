@@ -623,7 +623,7 @@ def integrate_profile_volume(rprof, prof, rmin=None, rmax=None, cumulative=False
         
 
 def average_from_profile(rprof, prof, prof_weight=None, rmin=None, rmax=None, cumulative=False):
-    '''
+    r'''
     Compute the weighted volume integral of the profile 'prof', defined on the 
      radial grid 'rprof', from rmin to rmax. That is to say, it returns:
 
@@ -757,7 +757,7 @@ def stack_profiles(list_r_input, list_profiles_input, stacking_method='median', 
 
 
 def project_profile_extensive(prof3d, r3d, R2d=None):
-    """ 
+    r""" 
     Project an extensive (additive) profile to a 2D plane, by integrating the profile along the line of sight.
 
     prof2d(R2d) = \int_{r3d} prof3d(r3d) * 2 * r3d * dr3d / sqrt(r3d^2 - R2d^2)
@@ -793,7 +793,7 @@ def project_profile_extensive(prof3d, r3d, R2d=None):
     return prof2d
 
 def project_profile_intensive(prof3d, r3d, R2d, weight3d=None):
-    """
+    r"""
     Project an intensive (non-additive) profile to a 2D plane, by integrating the profile along the line of sight using a weighting field.
 
     prof2d(R2d) = \int_{r3d} prof3d(r3d) * weight3d(r3d) * 2 * r3d * dr3d / sqrt(r3d^2 - R2d^2) / \int_{r3d} weight3d(r3d) * 2 * r3d * dr3d / sqrt(r3d^2 - R2d^2)

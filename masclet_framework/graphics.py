@@ -661,7 +661,7 @@ def cornerplot(dataset, varnames=None, units=None, logscale=None, figsize=None, 
                 upper = np.percentile(dataset[:, i], 84) - median
                 lower = median - np.percentile(dataset[:, i], 16)
 
-                axes[i,j].set_title(varnames[i] + ' = ' + format_uncertainty(median, lower, upper) + '$\;$' + units[i], 
+                axes[i,j].set_title(varnames[i] + ' = ' + format_uncertainty(median, lower, upper) + r'$\;$' + units[i], 
                                     fontsize=labelsize)
 
             elif i > j:
@@ -1011,7 +1011,7 @@ def projection_map(field, normal_vector, north_vector,
               interpolate=True,
               return_grid=False, return_grid_3d=False,
               use_tqdm=True):
-    """ 
+    r""" 
     Obtain a projection of a 3D AMR field along a line of sight defined by a normal vector, with a centre and a north vector.
 
     Args:
@@ -1275,7 +1275,7 @@ def projection_map_polars(field, normal_vector,
               interpolate=True,
               return_grid=False, return_grid_3d=False,
               use_tqdm=True):
-    """ 
+    r""" 
     Obtain a projection of a 3D AMR field along a line of sight defined by a normal vector, with a centre.
     Unlike projection_map, this function will return a polar projection, with the radial bins defined by the user.
     This is especially useful, for instance, if one wants to get logarithmically spaced radial bins, where a cartesian

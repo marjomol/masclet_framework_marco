@@ -158,7 +158,7 @@ def find_rDelta_eqn_particles(r, Delta, background_density, zeta, clusrx, clusry
 
 def find_rDelta_particles(Delta, zeta, clusrx, clusry, clusrz, x, y, z, m, h, omega_m, rmin=0.1, rmax=6, rtol=1e-3,
                           verbose=False):
-    """
+    r"""
     Finds the value (in Mpc) of r_\Delta, the radius enclosing a mean overdensity (of the DM field, by default) equal
     to Delta times the background density of the universe. By default, it uses the Brent method.
 

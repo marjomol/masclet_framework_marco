@@ -196,8 +196,8 @@ def stellar_mass_function(it, path='', L = 40.,
 
     #Define Figure
     fig, ax = plt.subplots(1,1, figsize=figsize, dpi = dpi)
-    ax.set_xlabel('$M_{\star}$ [$M_{\odot}$]', fontsize = axlabelsize)
-    ax.set_ylabel('$\phi$ [Mpc]$^{-3}$ [dex]$^{-1}$', fontsize = axlabelsize)
+    ax.set_xlabel(r'$M_{\star}$ [$M_{\odot}$]', fontsize = axlabelsize)
+    ax.set_ylabel(r'$\phi$ [Mpc]$^{-3}$ [dex]$^{-1}$', fontsize = axlabelsize)
     
     #Check if it, path and L are lists 
     if type(it) is not list:

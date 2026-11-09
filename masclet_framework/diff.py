@@ -377,8 +377,8 @@ def gradient_magnitude(field, dx, npatch, kept_patches=None, stencil=3):
 
 def directional_derivative_scalar_field(sfield, ufield_x, ufield_y, ufield_z, dx, npatch, kept_patches=None, stencil=3):
     '''
-    Computes (\vb{u} \cdot \nabla) \phi, where \vb{u} is a vector field and
-        \phi is a scalar field, defined on the AMR hierarchy of grids.
+    Computes (\vb{u} \\cdot \nabla) \\phi, where \vb{u} is a vector field and
+        \\phi is a scalar field, defined on the AMR hierarchy of grids.
 
     Args:
         sfield: a list of numpy arrays, each one containing the scalar field
@@ -396,7 +396,7 @@ def directional_derivative_scalar_field(sfield, ufield_x, ufield_y, ufield_z, dx
 
     Returns:
         u_nabla_phi: a list of numpy arrays, each one containing the result of
-                the operation (\vb{u} \cdot \nabla) \phi defined on the
+                the operation (\vb{u} \\cdot \nabla) \\phi defined on the
                 corresponding grid of the AMR hierarchy
 
     Author: David Vallés
@@ -418,7 +418,7 @@ def directional_derivative_scalar_field(sfield, ufield_x, ufield_y, ufield_z, dx
 
 def directional_derivative_vector_field(vfield_x, vfield_y, vfield_z, ufield_x, ufield_y, ufield_z, dx, npatch, kept_patches=None, stencil=3):
     '''
-    Computes (\vb{u} \cdot \nabla) \vb{v}, where \vb{u} and \vb{v} are vector
+    Computes (\vb{u} \\cdot \nabla) \vb{v}, where \vb{u} and \vb{v} are vector
         fields defined on the AMR hierarchy of grids.
 
     Args:
@@ -440,7 +440,7 @@ def directional_derivative_vector_field(vfield_x, vfield_y, vfield_z, ufield_x, 
 
     Returns:
         u_nabla_v: a list of numpy arrays, each one containing the result of
-                the operation (\vb{u} \cdot \nabla) \vb{v} defined on the
+                the operation (\vb{u} \\cdot \nabla) \vb{v} defined on the
                 corresponding grid of the AMR hierarchy
     
     Author: David Vallés

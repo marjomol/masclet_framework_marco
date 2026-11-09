@@ -154,7 +154,7 @@ def power_spectrum_vector_field(data_x, data_y, data_z, dx=1., ncores=1, do_zero
 
 
 def energy_spectrum_scalar_field(data, dx=1., ncores=1, do_zero_pad=False, zero_pad_factor=1.):
-    '''
+    r'''
     This function computes the energy power spectrum, E(k), of a 3D cubic scalar field.
 
     This is defined from the P(k) as:
@@ -192,10 +192,10 @@ def energy_spectrum_vector_field(data_x, data_y, data_z, dx=1., ncores=1, do_zer
     This function computes the energy power spectrum, E(k), of a 3D cubic vector field.
 
     This is defined from the P(k) as:
-        E(k) = 2 \pi k^2 P(k)
+        E(k) = 2 \\pi k^2 P(k)
 
     And satisfies:
-        \int_0^\infty E(k) dk = 1/2 <\vec data^2>
+        \\int_0^\\infty E(k) dk = 1/2 <\vec data^2>
 
     Args:
         - data_x, data_y, data_z: the 3D arrays containing the 3 components of the vector field
@@ -328,10 +328,10 @@ def energy_spectrum_vector_field_Helmholtz(data_x, data_y, data_z, dx=1., ncores
      returning separately the total, the compressive and the solenoidal one.
 
     This is defined from the P(k) as:
-        E(k) = 2 \pi k^2 P(k)
+        E(k) = 2 \\pi k^2 P(k)
 
     And satisfies:
-        \int_0^\infty E(k) dk = 1/2 <\vec data^2>
+        \\int_0^\\infty E(k) dk = 1/2 <\vec data^2>
 
     Args:
         - data: the 3D array containing the input field

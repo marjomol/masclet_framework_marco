@@ -170,7 +170,7 @@ def LCDM_time_to_z(t, omega_m, omega_lambda, h, zmin=0., zmax=1000., zini=1.,
 
 
 def critical_density(h, z=0, omega_m=0, omega_lambda=0):
-    """
+    r"""
     Computes the value of the critical density of the universe (for making k=0, Lambda=0) at a given redshift, z.
     Units: solar masses per Mpc^3.
 
@@ -193,7 +193,7 @@ def critical_density(h, z=0, omega_m=0, omega_lambda=0):
 
 
 def background_density(h, omega_m, z=0):
-    """
+    r"""
     Computes the value of the background (matter) density of the universe, at a given redshift z.
     Units: solar masses per Mpc^3.
 
