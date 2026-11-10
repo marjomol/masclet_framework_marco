@@ -11,6 +11,9 @@ quantity. Run from the repository root:
 
     python quicklook/maps.py --sim-dir SIM --params masclet_parameters.json --it 1350 --level 6 --res-level 6
                              --center peak --width 8 [--mode slice | projection] [--axis z] [--out FOLDER]
+                             [--clim Q VMIN VMAX ...]
+
+The colour limits of every panel are printed; --clim fixes them (e.g. to those of another iteration).
 
 Projections: densities are the mean along the line of sight (the sum times dx / depth), T is weighted by the gas mass,
 |B| is the rms (sqrt of the mean B^2) and beta = 2 sum(P) / sum(B^2).
@@ -218,7 +221,11 @@ def plot_maps(args, grid, images, centre, width, centre_info, centre_tag, width_
             cmap = plt.get_cmap(common.QUANTITIES[q]['cmap']).copy()
             cmap.set_bad(cmap(0.))
             cmap.set_under(cmap(0.))
-            im = ax.imshow(images[q].T, extent=extent, cmap=cmap, norm=common.color_norm(q, images[q], pmax=args.pmax))
+            # colour limits fixed with --clim (e.g. those of another iteration, to compare), else from percentiles
+            vmin, vmax = args.clim.get(q, (None, None))
+            norm = common.color_norm(q, images[q], vmin=vmin, vmax=vmax, pmax=args.pmax)
+            print('colour limits %-5s %.6e %.6e' % (q, norm.vmin, norm.vmax), flush=True)
+            im = ax.imshow(images[q].T, extent=extent, cmap=cmap, norm=norm)
             common.add_colorbar(fig, ax, im, q)
             common.add_scale_bar(ax, width)
             ax.set_xlabel('%s [cMpc]' % AXIS_NAMES[o['axes'][0]])
@@ -233,6 +240,9 @@ def plot_maps(args, grid, images, centre, width, centre_info, centre_tag, width_
         # with a subset of the quantities, their names go in the file name (e.g. a DM-only view at another resolution)
         if keys != list(common.QUANTITIES):
             view += '_' + '-'.join(keys)
+        # colour limits fixed by hand (--clim)
+        if any(q in args.clim for q in keys):
+            view += '_clim'
         path = common.output_name(args, view, centre_tag)
         fig.savefig(path)
         plt.close(fig)
@@ -246,7 +256,15 @@ def main():
     parser.add_argument('--depth', type=float, default=None,
                         help='projection depth in cMpc (default: the side of the window)')
     parser.add_argument('--quantities', nargs='+', default=list(common.QUANTITIES), choices=list(common.QUANTITIES))
+    parser.add_argument('--clim', nargs=3, action='append', default=None, metavar=('Q', 'VMIN', 'VMAX'),
+                        help='colour limits of quantity Q (repeat for several quantities; default: percentiles)')
     args = common.parse_arguments(parser)
+    clim = {}
+    for q, lo, hi in args.clim or []:
+        if q not in common.QUANTITIES:
+            raise SystemExit('--clim: unknown quantity %s (%s)' % (q, ', '.join(common.QUANTITIES)))
+        clim[q] = (float(lo), float(hi))
+    args.clim = clim
     timer = common.Timer()
 
     quantities = [q for q in args.quantities
